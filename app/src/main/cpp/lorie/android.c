@@ -127,7 +127,7 @@ static jclass FindMethodOrDie(JNIEnv *env, jclass clazz, const char* name, const
 }
 
 JNIEXPORT jboolean JNICALL
-Java_com_micewine_emu_CmdEntryPoint_start(JNIEnv *env, unused jclass cls, jobjectArray args) {
+Java_com_olympus_emu_CmdEntryPoint_start(JNIEnv *env, unused jclass cls, jobjectArray args) {
     pthread_t t;
     JavaVM* vm = NULL;
     // execv's argv array is a bit incompatible with Java's String[], so we do some converting here...
@@ -162,7 +162,7 @@ Java_com_micewine_emu_CmdEntryPoint_start(JNIEnv *env, unused jclass cls, jobjec
         execlp("logcat", "logcat", "--pid", pid, NULL);
     }
 
-    setenv("TMPDIR", "/data/data/com.micewine.emu/files/usr/tmp", 1);
+    setenv("TMPDIR", "/data/data/com.olympus.emu/files/usr/tmp", 1);
 
     if (!getenv("TMPDIR")) {
         char* error = (char*) "$TMPDIR is not set. Normally it is pointing to /tmp of a container.";
@@ -202,7 +202,7 @@ Java_com_micewine_emu_CmdEntryPoint_start(JNIEnv *env, unused jclass cls, jobjec
         }
     }
 
-    setenv("XKB_CONFIG_ROOT", "/data/data/com.micewine.emu/files/usr/share/X11/xkb", 1);
+    setenv("XKB_CONFIG_ROOT", "/data/data/com.olympus.emu/files/usr/share/X11/xkb", 1);
 
     if (!getenv("XKB_CONFIG_ROOT")) {
         char* error = (char*) "$XKB_CONFIG_ROOT is not set. Normally it is pointing to /usr/share/X11/xkb of a container.";
@@ -225,7 +225,7 @@ Java_com_micewine_emu_CmdEntryPoint_start(JNIEnv *env, unused jclass cls, jobjec
 }
 
 JNIEXPORT void JNICALL
-Java_com_micewine_emu_CmdEntryPoint_windowChanged(JNIEnv *env, unused jobject cls, jobject surface) {
+Java_com_olympus_emu_CmdEntryPoint_windowChanged(JNIEnv *env, unused jobject cls, jobject surface) {
     QueueWorkProc(lorieChangeWindow, NULL, surface ? (*env)->NewGlobalRef(env, surface) : NULL);
 }
 
@@ -384,7 +384,7 @@ static Bool addFd(unused ClientPtr pClient, void *closure) {
 }
 
 JNIEXPORT jobject JNICALL
-Java_com_micewine_emu_CmdEntryPoint_getXConnection(JNIEnv *env, unused jobject cls) {
+Java_com_olympus_emu_CmdEntryPoint_getXConnection(JNIEnv *env, unused jobject cls) {
     int client[2];
     jclass ParcelFileDescriptorClass = (*env)->FindClass(env, "android/os/ParcelFileDescriptor");
     jmethodID adoptFd = (*env)->GetStaticMethodID(env, ParcelFileDescriptorClass, "adoptFd", "(I)Landroid/os/ParcelFileDescriptor;");
@@ -405,7 +405,7 @@ void* logcatThread(void *arg) {
 }
 
 JNIEXPORT jobject JNICALL
-Java_com_micewine_emu_CmdEntryPoint_getLogcatOutput(JNIEnv *env, unused jobject cls) {
+Java_com_olympus_emu_CmdEntryPoint_getLogcatOutput(JNIEnv *env, unused jobject cls) {
     jclass ParcelFileDescriptorClass = (*env)->FindClass(env, "android/os/ParcelFileDescriptor");
     jmethodID adoptFd = (*env)->GetStaticMethodID(env, ParcelFileDescriptorClass, "adoptFd", "(I)Landroid/os/ParcelFileDescriptor;");
     const char *debug = getenv("TERMUX_X11_DEBUG");
@@ -421,7 +421,7 @@ Java_com_micewine_emu_CmdEntryPoint_getLogcatOutput(JNIEnv *env, unused jobject 
 }
 
 JNIEXPORT jboolean JNICALL
-Java_com_micewine_emu_CmdEntryPoint_connected(__unused JNIEnv *env, __unused jclass clazz) {
+Java_com_olympus_emu_CmdEntryPoint_connected(__unused JNIEnv *env, __unused jclass clazz) {
     return conn_fd != -1;
 }
 
@@ -433,7 +433,7 @@ static inline void checkConnection(JNIEnv* env) {
 
     if ((retval = recv(conn_fd, &b, 1, MSG_PEEK)) <= 0 && errno != EAGAIN) {
         log(DEBUG, "recv %d %s", retval, strerror(errno));
-        jclass cls = (*env)->FindClass(env, "com/micewine/emu/CmdEntryPoint");
+        jclass cls = (*env)->FindClass(env, "com/olympus/emu/CmdEntryPoint");
         jmethodID method = !cls ? NULL : (*env)->GetStaticMethodID(env, cls, "requestConnection", "()V");
         if (method)
             (*env)->CallStaticVoidMethod(env, cls, method);
@@ -444,7 +444,7 @@ static inline void checkConnection(JNIEnv* env) {
 }
 
 JNIEXPORT void JNICALL
-Java_com_micewine_emu_LorieView_connect(unused JNIEnv* env, unused jobject cls, jint fd) {
+Java_com_olympus_emu_LorieView_connect(unused JNIEnv* env, unused jobject cls, jint fd) {
     if (!Charset.self) {
         // Init clipboard-related JNI stuff
         Charset.self = FindClassOrDie(env, "java/nio/charset/Charset");
@@ -462,7 +462,7 @@ Java_com_micewine_emu_LorieView_connect(unused JNIEnv* env, unused jobject cls, 
 }
 
 JNIEXPORT void JNICALL
-Java_com_micewine_emu_LorieView_handleXEvents(JNIEnv *env, jobject thiz) {
+Java_com_olympus_emu_LorieView_handleXEvents(JNIEnv *env, jobject thiz) {
     checkConnection(env);
     if (conn_fd != -1) {
         lorieEvent e = {0};
@@ -499,7 +499,7 @@ Java_com_micewine_emu_LorieView_handleXEvents(JNIEnv *env, jobject thiz) {
 }
 
 JNIEXPORT void JNICALL
-Java_com_micewine_emu_LorieView_startLogcat(JNIEnv *env, unused jobject cls, jint fd) {
+Java_com_olympus_emu_LorieView_startLogcat(JNIEnv *env, unused jobject cls, jint fd) {
     log(DEBUG, "Starting logcat with output to given fd");
 
     switch(fork()) {
@@ -519,7 +519,7 @@ Java_com_micewine_emu_LorieView_startLogcat(JNIEnv *env, unused jobject cls, jin
 }
 
 JNIEXPORT void JNICALL
-Java_com_micewine_emu_LorieView_setClipboardSyncEnabled(unused JNIEnv* env, unused jobject cls, jboolean enable, __unused jboolean ignored) {
+Java_com_olympus_emu_LorieView_setClipboardSyncEnabled(unused JNIEnv* env, unused jobject cls, jboolean enable, __unused jboolean ignored) {
     if (conn_fd != -1) {
         lorieEvent e = { .clipboardEnable = { .t = EVENT_CLIPBOARD_ENABLE, .enable = enable } };
         write(conn_fd, &e, sizeof(e));
@@ -528,7 +528,7 @@ Java_com_micewine_emu_LorieView_setClipboardSyncEnabled(unused JNIEnv* env, unus
 }
 
 JNIEXPORT void JNICALL
-Java_com_micewine_emu_LorieView_sendClipboardAnnounce(JNIEnv *env, jobject thiz) {
+Java_com_olympus_emu_LorieView_sendClipboardAnnounce(JNIEnv *env, jobject thiz) {
     if (conn_fd != -1) {
         lorieEvent e = { .type = EVENT_CLIPBOARD_ANNOUNCE };
         write(conn_fd, &e, sizeof(e));
@@ -537,7 +537,7 @@ Java_com_micewine_emu_LorieView_sendClipboardAnnounce(JNIEnv *env, jobject thiz)
 }
 
 JNIEXPORT void JNICALL
-Java_com_micewine_emu_LorieView_sendClipboardEvent(JNIEnv *env, unused jobject thiz, jbyteArray text) {
+Java_com_olympus_emu_LorieView_sendClipboardEvent(JNIEnv *env, unused jobject thiz, jbyteArray text) {
     if (conn_fd != -1 && text) {
         jsize length = (*env)->GetArrayLength(env, text);
         jbyte* str = (*env)->GetByteArrayElements(env, text, NULL);
@@ -550,7 +550,7 @@ Java_com_micewine_emu_LorieView_sendClipboardEvent(JNIEnv *env, unused jobject t
 }
 
 JNIEXPORT void JNICALL
-Java_com_micewine_emu_LorieView_sendWindowChange(unused JNIEnv* env, unused jobject cls, jint width, jint height, jint framerate) {
+Java_com_olympus_emu_LorieView_sendWindowChange(unused JNIEnv* env, unused jobject cls, jint width, jint height, jint framerate) {
     if (conn_fd != -1) {
         lorieEvent e = { .screenSize = { .t = EVENT_SCREEN_SIZE, .width = width, .height = height, .framerate = framerate } };
         write(conn_fd, &e, sizeof(e));
@@ -559,7 +559,7 @@ Java_com_micewine_emu_LorieView_sendWindowChange(unused JNIEnv* env, unused jobj
 }
 
 JNIEXPORT void JNICALL
-Java_com_micewine_emu_LorieView_sendMouseEvent(unused JNIEnv* env, unused jobject cls, jfloat x, jfloat y, jint which_button, jboolean button_down, jboolean relative) {
+Java_com_olympus_emu_LorieView_sendMouseEvent(unused JNIEnv* env, unused jobject cls, jfloat x, jfloat y, jint which_button, jboolean button_down, jboolean relative) {
     if (conn_fd != -1) {
         lorieEvent e = { .mouse = { .t = EVENT_MOUSE, .x = x, .y = y, .detail = which_button, .down = button_down, .relative = relative } };
         write(conn_fd, &e, sizeof(e));
@@ -568,7 +568,7 @@ Java_com_micewine_emu_LorieView_sendMouseEvent(unused JNIEnv* env, unused jobjec
 }
 
 JNIEXPORT void JNICALL
-Java_com_micewine_emu_LorieView_sendTouchEvent(unused JNIEnv* env, unused jobject cls, jint action, jint id, jint x, jint y) {
+Java_com_olympus_emu_LorieView_sendTouchEvent(unused JNIEnv* env, unused jobject cls, jint action, jint id, jint x, jint y) {
     if (conn_fd != -1 && action != -1) {
         lorieEvent e = { .touch = { .t = EVENT_TOUCH, .type = action, .id = id, .x = x, .y = y } };
         write(conn_fd, &e, sizeof(e));
@@ -577,7 +577,7 @@ Java_com_micewine_emu_LorieView_sendTouchEvent(unused JNIEnv* env, unused jobjec
 }
 
 JNIEXPORT jboolean JNICALL
-Java_com_micewine_emu_LorieView_sendKeyEvent(unused JNIEnv* env, unused jobject cls, jint scan_code, jint key_code, jboolean key_down) {
+Java_com_olympus_emu_LorieView_sendKeyEvent(unused JNIEnv* env, unused jobject cls, jint scan_code, jint key_code, jboolean key_down) {
     if (conn_fd != -1) {
         int code = (scan_code) ?: android_to_linux_keycode[key_code];
         log(DEBUG, "Sending key: %d (%d %d %d)", code + 8, scan_code, key_code, key_down);
@@ -590,7 +590,7 @@ Java_com_micewine_emu_LorieView_sendKeyEvent(unused JNIEnv* env, unused jobject 
 }
 
 JNIEXPORT void JNICALL
-Java_com_micewine_emu_LorieView_sendTextEvent(JNIEnv *env, unused jobject thiz, jbyteArray text) {
+Java_com_olympus_emu_LorieView_sendTextEvent(JNIEnv *env, unused jobject thiz, jbyteArray text) {
     if (conn_fd != -1 && text) {
         jsize length = (*env)->GetArrayLength(env, text);
         jbyte *str = (*env)->GetByteArrayElements(env, text, NULL);
@@ -625,7 +625,7 @@ Java_com_micewine_emu_LorieView_sendTextEvent(JNIEnv *env, unused jobject thiz, 
 }
 
 JNIEXPORT void JNICALL
-Java_com_micewine_emu_LorieView_sendUnicodeEvent(JNIEnv *env, unused jobject thiz, jint code) {
+Java_com_olympus_emu_LorieView_sendUnicodeEvent(JNIEnv *env, unused jobject thiz, jint code) {
     if (conn_fd != -1) {
         log(DEBUG, "Sending unicode event: %lc (U+%X)", code, code);
         lorieEvent e = { .unicode = { .t = EVENT_UNICODE, .code = code } };
@@ -665,7 +665,7 @@ static void* stderrToLogcatThread(unused void* cookie) {
 
 __attribute__((constructor)) static void init(void) {
     pthread_t t;
-    if (!strcmp("com.micewine.emu", __progname))
+    if (!strcmp("com.olympus.emu", __progname))
         pthread_create(&t, NULL, stderrToLogcatThread, NULL);
 }
 
